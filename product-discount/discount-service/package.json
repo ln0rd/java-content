@@ -1,0 +1,23 @@
+{
+  "name": "discount-service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "./node_modules/.bin/mocha",
+    "start": "node server.js"
+  },
+  "author": "leonardo l bufalo",
+  "license": "ISC",
+  "dependencies": {
+    "@grpc/proto-loader": "0.6.0",
+    "grpc": "1.24.6",
+    "grpc-kit": "0.2.0",
+    "mysql2": "2.2.5",
+    "proto-loader": "0.2.0",
+    "sequelize": "6.6.2"
+  },
+  "devDependencies": {
+    "mocha": "8.3.2"
+  }
+}
