@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  moon:
+    container_name: "moon"
+    build:
+      context: .
+    ports:
+    - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    links:
+      - mysql
+    environment:
+      ENV: dev
+      MYSQL_HOST: moon_database
+      MYSQL_PORT: 3306
+
+  mysql:
+    image: mysql:8.0
+    cap_add:
+      - CAP_SYS_NICE
+    container_name: moon_database
+    command: '--default-authentication-plugin=mysql_native_password'
+    environment:
+      MYSQL_USER: 'user'
+      MYSQL_PASSWORD: 'password'
+      MYSQL_ROOT_PASSWORD: 'root'
+      MYSQL_DATABASE: 'moon'
+    ports:
+      - 3306:3306
+    volumes:
+      - ./sql/database.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      timeout: 20s
+      retries: 10
+
+  zookeeper:
+    container_name: moon-zookeeper
+    image: debezium/zookeeper
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: debezium/kafka
+    container_name: moon-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      ADVERTISED_HOST: "moon"
+      ZOOKEEPER_CONNECT: moon-zookeeper:2181
+      KAFKA_DELETE_TOPIC_ENABLE: "true"
+      KAFKA_CREATE_TOPICS: "moon-create-payment:1:1"
+    links:
+      - "zookeeper"
+
+  kafka-manager:
+    image: sheepkiller/kafka-manager:latest
+    container_name: moon-kafka-manager
+    ports:
+      - "9000:9000"
+    links:
+      - zookeeper
+      - kafka
+    environment:
+      ZK_HOSTS: moon-zookeeper:2181
+      APPLICATION_SECRET: root
+      KM_ARGS: -Djava.net.preferIPv4Stack=true
